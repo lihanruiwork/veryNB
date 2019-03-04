@@ -14,7 +14,9 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
-            title: 'html auto'
+            filename: 'index.html',
+            template: './src/index.html',
+            inject: true
         })
     ],
     module: {
