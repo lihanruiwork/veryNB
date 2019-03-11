@@ -1,0 +1,78 @@
+小程序监控体系的数据采集部分
+主要是做日志回捞
+两个维度 Logan & caterror
+信息采集从app&page的各个生命周期、request请求&响应信息
+Sdk
+中间件
+Init(obj:{app,page,request}){
+	Object.assign(config,obj)
+}
+App(obj){
+	let { onLaunch, onShow, onHide，preError, preNotFound} = obj
+	Object.assign(obj,{
+		onLaunch(opt){
+			做一些日志打点
+			onLaunch && onLaunch.call(this,opt)
+		}
+		onError
+	})
+	config.app(obj)
+}
+Page(obj){
+Onload onShow onready onhide
+}
+Request(obj){
+	_complete = obj.complete
+	obj.complete = function(res){
+		addlog
+		_complete && _complete.apply(this,res)
+	}
+	return config.request(obj)
+}
+report不允许上报太多
+这个是针对特殊用户的
+维护了一个用户的白名单
+在app.onlaunch里判断白名单用户
+[{openid, key}]，用户缓存里存着之前的key，用于确认key是否更新了
+Key有更新就report ，然后就可以看到打点的数据了
+1、Logan
+针对用户摇一摇
+Logan.log
+2、Owl 页面性能 上报cat error
+丰富这个error信息
+Preerror(options){
+	丰富options（浏览路径：load show，当前page所有的request，除去lx和cat上报）
+	return options
+} 
+补充
+难点:
+如何控制只上报当前page：
+1、page onload 
+判断如果不是加载的第一个页面（isClear=false），就清空requestarr
+2、否则修改页面标识(isClear=true)
+dp-owl
+obj.onError = function(options){
+	options = obj.preError?obj.preError(options):options
+}
+
+
+前端的逻辑是 只有签到成功才会继续发抽奖请求，
+由于网络延迟，没有返回签到成功的时候，用户就退出了页面，所以前端并不会发起抽奖请求。
+但是签到请求已发到网络中，所以最后的结果是用户签到了，但是没抽奖。
+想要解决 网络延迟导致用户签到未抽奖 
+问题的方式就是，前端不再等待用户签到成功才发起抽奖请求，只要用户做了签到的动作，就发起抽奖，
+但是必须保证用户每天只能抽一次奖
+
+
+数据可视化
+d3 echart
+力导向图 对节点有一些拖拽，这些节点要保持平衡，导致布局也要变
+用echart做完，发现一旦拖拽节点或者任何打破图结构的操作，导致重绘，页面卡顿明显
+改用d3
+echart基于canvas
+D3基于svg
+用了d3不卡顿了
+面向对象思想 和 函数化思想
+在渲染上其实echarts更快，因为只有一个canvas节点
+但是总拖拽，echarts就要重新计算，就会卡顿
+用d3好多了，省去大量计算 
